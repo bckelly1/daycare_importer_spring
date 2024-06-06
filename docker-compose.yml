@@ -1,0 +1,25 @@
+services:
+  daycare_importer:
+    #image: daycare_importer_spring
+    build: .
+    container_name: daycare_importer_spring
+    environment:
+      #- MAIL_USERNAME=
+      #- MAIL_PASSWORD=
+      #- MAIL_LABEL=
+      #- SERVER_PORT=8080
+      - EXAMPLE=
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=$DEFAULT_NETWORK"
+      - "traefik.http.routers.daycare_importer_spring.rule=Host(`daycare-importer-spring.$MY_DOMAIN`)"
+      - "traefik.http.services.daycare_importer_spring.loadbalancer.server.port=8080"
+    networks:
+      - $DEFAULT_NETWORK
+
+networks:
+  traefik_net:
+    name: $DEFAULT_NETWORK
+    external: true
+
