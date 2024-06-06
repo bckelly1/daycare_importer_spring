@@ -11,6 +11,9 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -24,10 +27,19 @@ public class ImportService {
     @Autowired
     private ImageDownloadService imageDownloadService;
 
+    public void runDaycareSummaryImport() {
+        MailMessage[] unreadMessages = gmailService.getUnreadMessages("", mailConfig.getDaycareLabel());
+
+        for (MailMessage unreadMessage : unreadMessages) {
+            handleDaycareSummaryEmail(unreadMessage);
+            gmailService.markAsRead(unreadMessage);
+        }
+    }
+
 // Reads the content of the email from Daycare, extract child name and pictures. The URLs of the pictures are S3 objects.
 //   The original objects are "medium" quality but by guessing the URLs, you can get the original quality photos. Each
 //   Photo is then downloaded and saved.
-    public void handleDaycareSummaryEmail(MailMessage mailMessage) {
+    private void handleDaycareSummaryEmail(MailMessage mailMessage) {
         Document document = Jsoup.parse(mailMessage.getHtml());
         String childName = document.select("span.emailH1").text().strip().split(" ")[0];
         Elements images = document.body().select("img.resize_img1");
