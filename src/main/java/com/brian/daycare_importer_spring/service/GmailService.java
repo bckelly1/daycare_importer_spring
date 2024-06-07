@@ -164,8 +164,8 @@ public class GmailService {
             SearchTerm searchTerm = new MessageIDTerm(mailMessage.getMessageId());
             Message[] findMessages = inbox.search(searchTerm);
             for(Message message : findMessages) {
-                log.info("Not marking message {} as seen, running in debug mode", mailMessage.getMessageId());
-		//message.setFlag(Flags.Flag.SEEN, true);
+//                log.info("Not marking message {} as seen, running in debug mode", mailMessage.getMessageId());
+		        message.setFlag(Flags.Flag.SEEN, true);
             }
         } catch (MessagingException e) {
             throw new RuntimeException(e);
