@@ -34,6 +34,7 @@ public class ImageDownloadService {
         if (resource != null && resource.exists()) {
             Path destinationPath = Paths.get(destinationFilePath);
             try {
+                log.debug("Copying file to {}", destinationFilePath);
                 Files.copy(resource.getInputStream(), destinationPath);
             } catch (IOException e) {
                 log.error("Failed to download image from {}", url, e);

@@ -11,9 +11,6 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -40,9 +37,14 @@ public class ImportService {
 //   The original objects are "medium" quality but by guessing the URLs, you can get the original quality photos. Each
 //   Photo is then downloaded and saved.
     private void handleDaycareSummaryEmail(MailMessage mailMessage) {
+        String date = mailMessage.getHeaders().get("Date");
+        log.info("Parsing email from {}", date);
+
         Document document = Jsoup.parse(mailMessage.getHtml());
         String childName = document.select("span.emailH1").text().strip().split(" ")[0];
         Elements images = document.body().select("img.resize_img1");
+        log.info("Located {} images", images.size());
+
         for(Element image : images) {
             String imageSource = image.attributes().get("src");
             String imageOriginal;
@@ -65,13 +67,7 @@ public class ImportService {
             String imagePath = imageDirectory + "/" + imageName;
 
             imageDownloadService.downloadImage(imageOriginal, imagePath);
-            imageDownloadService.modifyImageDownloadTimestamp(imagePath, mailMessage.getHeaders().get("Date"));
-        }
-    }
-
-    private void markRead(MailMessage[] mailMessages) {
-        for(MailMessage mailMessage : mailMessages) {
-            gmailService.markAsRead(mailMessage);
+            imageDownloadService.modifyImageDownloadTimestamp(imagePath, date);
         }
     }
 }
