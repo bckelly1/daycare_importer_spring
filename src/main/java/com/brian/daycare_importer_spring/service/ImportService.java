@@ -26,6 +26,7 @@ public class ImportService {
 
     public void runDaycareSummaryImport() {
         MailMessage[] unreadMessages = gmailService.getUnreadMessages("", mailConfig.getDaycareLabel());
+        log.info("Unread messages count: {}", unreadMessages.length);
 
         for (MailMessage unreadMessage : unreadMessages) {
             handleDaycareSummaryEmail(unreadMessage);
@@ -65,9 +66,10 @@ public class ImportService {
 
             String imageDirectory = "images/" + childName;
             String imagePath = imageDirectory + "/" + imageName;
+            Long time = Long.parseLong(mailMessage.getHeaders().get("Custom-Epoch")) * 1000L;
 
             imageDownloadService.downloadImage(imageOriginal, imagePath);
-            imageDownloadService.modifyImageDownloadTimestamp(imagePath, date);
+            imageDownloadService.modifyImageDownloadTimestamp(imagePath, time);
         }
     }
 }

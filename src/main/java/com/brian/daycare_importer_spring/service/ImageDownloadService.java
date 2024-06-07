@@ -1,12 +1,15 @@
 package com.brian.daycare_importer_spring.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RequestCallback;
+import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,11 +18,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
-@Service
 @Slf4j
+@Service
 public class ImageDownloadService {
 
     private final RestTemplate restTemplate;
@@ -29,22 +32,34 @@ public class ImageDownloadService {
     }
 
     public void downloadImage(String url, String destinationFilePath) {
-        Resource resource = restTemplate.getForObject(url, UrlResource.class);
+        log.debug("Copying file to {}", destinationFilePath);
 
-        if (resource != null && resource.exists()) {
+        try {
+            // Ensure the parent directory exists
             Path destinationPath = Paths.get(destinationFilePath);
-            try {
-                log.debug("Copying file to {}", destinationFilePath);
-                Files.copy(resource.getInputStream(), destinationPath);
-            } catch (IOException e) {
-                log.error("Failed to download image from {}", url, e);
-            }
-        } else {
-            log.error("Failed to download image from {}", url);
+            Files.createDirectories(destinationPath.getParent());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+
+        RequestCallback requestCallback = request -> request.getHeaders().setAccept(List.of(org.springframework.http.MediaType.ALL));
+
+        ResponseExtractor<Void> responseExtractor = response -> {
+            try (InputStream inputStream = response.getBody();
+                FileOutputStream outputStream = new FileOutputStream(destinationFilePath)) {
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                }
+            return null;
+        };
+
+        restTemplate.execute(url, HttpMethod.GET, requestCallback, responseExtractor);
     }
 
-    public void modifyImageDownloadTimestamp(String filePath, String newCreationDate) {
+    public void modifyImageDownloadTimestamp(String filePath, Long newCreationDate) {
 
         try {
             Path path = Paths.get(filePath);
@@ -64,8 +79,8 @@ public class ImageDownloadService {
         }
     }
 
-    private Date parseDate(String date) throws ParseException {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return dateFormat.parse(date);
+    private Date parseDate(Long time) throws ParseException {
+        return new Date(time);
     }
 }
+
