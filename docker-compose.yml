@@ -1,7 +1,7 @@
 services:
   daycare_importer:
-    #image: daycare_importer_spring
-    build: .
+    image: daycare_importer_spring
+#    build: .
     container_name: daycare_importer_spring
     environment:
       #- MAIL_USERNAME=
