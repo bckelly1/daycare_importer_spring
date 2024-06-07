@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
@@ -66,10 +67,8 @@ public class ImageDownloadService {
             FileTime fileTime = FileTime.fromMillis(parseDate(newCreationDate).getTime());
 
             // Update basic file attributes
-            BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
-            UserDefinedFileAttributeView view = Files.getFileAttributeView(path, UserDefinedFileAttributeView.class);
-
-            view.write("creationTime", ByteBuffer.wrap(fileTime.toString().getBytes()));
+            BasicFileAttributeView attrs = Files.getFileAttributeView(path, BasicFileAttributeView.class);
+            attrs.setTimes(null, null, fileTime);
 
             // If the filesystem supports setting creation time
             Files.setAttribute(path, "basic:creationTime", fileTime);
