@@ -25,7 +25,7 @@ public class ImportService {
     private ImageDownloadService imageDownloadService;
 
     public void runDaycareSummaryImport() {
-        MailMessage[] unreadMessages = gmailService.getUnreadMessages("", mailConfig.getDaycareLabel());
+        MailMessage[] unreadMessages = gmailService.getUnreadMessages(mailConfig.getDaycareLabel());
         log.info("Unread messages count: {}", unreadMessages.length);
 
         for (MailMessage unreadMessage : unreadMessages) {

@@ -31,7 +31,7 @@ import java.util.Properties;
 public class GmailService {
     final MailConfig mailConfig;
 
-    public MailMessage[] getUnreadMessages(String filter, String label) {
+    public MailMessage[] getUnreadMessages(String label) {
         // Gmail IMAP properties
         Properties properties = new Properties();
         properties.setProperty("mail.store.protocol", "imaps");
@@ -50,14 +50,8 @@ public class GmailService {
             // Create a search term for unread messages
             SearchTerm unreadTerm = new FlagTerm(new Flags(Flags.Flag.SEEN), false);
 
-            // Create a search term for messages with subject "filter"
-            SearchTerm subjectTerm = new SubjectTerm(filter);
-
-            // Combine the search terms using the AndTerm
-            SearchTerm searchTerm = new AndTerm(unreadTerm, subjectTerm);
-
             log.info("Searching for unread messages");
-            Message[] messages = inbox.search(searchTerm);
+            Message[] messages = inbox.search(unreadTerm);
 
             log.info("Found {} unread messages", messages.length);
             MailMessage[] mailMessages = parseMailMessages(messages, label);
