@@ -41,6 +41,7 @@ public class GmailService {
             Session session = Session.getInstance(properties, null);
             Store store = session.getStore("imaps");
             store.connect(mailConfig.getHost(), mailConfig.getUsername(), mailConfig.getPassword());
+            log.info("Connected to mail server via imaps");
 
             // Open inbox folder
             Folder inbox = store.getFolder(label);
@@ -55,7 +56,10 @@ public class GmailService {
             // Combine the search terms using the AndTerm
             SearchTerm searchTerm = new AndTerm(unreadTerm, subjectTerm);
 
+            log.info("Searching for unread messages");
             Message[] messages = inbox.search(searchTerm);
+
+            log.info("Found {} unread messages", messages.length);
             MailMessage[] mailMessages = parseMailMessages(messages, label);
 
             // Close resources
