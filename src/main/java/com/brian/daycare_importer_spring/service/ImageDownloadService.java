@@ -3,6 +3,7 @@ package com.brian.daycare_importer_spring.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
@@ -57,7 +58,12 @@ public class ImageDownloadService {
             return null;
         };
 
-        restTemplate.execute(url, HttpMethod.GET, requestCallback, responseExtractor);
+        try {
+            restTemplate.execute(url, HttpMethod.GET, requestCallback, responseExtractor);
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Error downloading image: " + url + "\n", e);
+        }
     }
 
     public void modifyImageDownloadTimestamp(String filePath, Long newCreationDate) {
