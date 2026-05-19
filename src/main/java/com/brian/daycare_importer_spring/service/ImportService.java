@@ -24,20 +24,72 @@ public class ImportService {
     @Autowired
     private ImageDownloadService imageDownloadService;
 
-    public void runDaycareSummaryImport() {
-        MailMessage[] unreadMessages = gmailService.getUnreadMessages(mailConfig.getDaycareLabel());
+    public void runSunshineHouseImport() {
+        MailMessage[] unreadMessages = gmailService.getUnreadMessages(mailConfig.getSunshineHouseLabel());
         log.info("Unread messages count: {}", unreadMessages.length);
 
         for (MailMessage unreadMessage : unreadMessages) {
-            handleDaycareSummaryEmail(unreadMessage);
+            handleSunshineHouseSummaryEmail(unreadMessage);
             gmailService.markAsRead(unreadMessage);
+        }
+    }
+
+    public void runBrightHorizonsImport() {
+        MailMessage[] unreadMessages = gmailService.getUnreadMessages(mailConfig.getBrightHorizonsLabel());
+        log.info("Unread messages count: {}", unreadMessages.length);
+
+        for (MailMessage unreadMessage : unreadMessages) {
+            handleBrightHorizonsDaycareSummaryEmail(unreadMessage);
+            gmailService.markAsRead(unreadMessage);
+        }
+    }
+
+    private void handleBrightHorizonsDaycareSummaryEmail(MailMessage mailMessage) {
+        String date = mailMessage.getHeaders().get("Date");
+        log.info("Parsing email from {}", date);
+
+        Document document = Jsoup.parse(mailMessage.getHtml());
+
+        // Child name is now in a td with class "child-name"
+        String childName = document.select("td.child-name").text().strip().split(" ")[0];
+
+        // Select only snapshot/activity images from the Bright Horizons media API,
+        // excluding the profile picture (which uses thumbnail=true)
+        Elements images = document.body().select(
+                "img[src*='mbdgw.brighthorizons.com/api/parent/medias/v1/media/m/snapshot/']"
+        );
+        log.info("Located {} images", images.size());
+
+        for (Element image : images) {
+            String imageSource = image.attributes().get("src");
+
+            // Strip query parameters to get the original quality image
+            // e.g. https://mbdgw.brighthorizons.com/.../snapshot/abc123?d=t&enail=true
+            //   -> https://mbdgw.brighthorizons.com/.../snapshot/abc123
+            String imageOriginal = imageSource.contains("?")
+                    ? imageSource.substring(0, imageSource.indexOf("?"))
+                    : imageSource;
+
+            log.info(imageOriginal);
+
+            String[] imageOriginalParts = imageOriginal.split("/");
+            String imageName = imageOriginalParts[imageOriginalParts.length - 1];
+
+            String imageDirectory = "images/" + childName;
+            String imagePath = imageDirectory + "/" + imageName + ".jpg";
+            Long time = Long.parseLong(mailMessage.getHeaders().get("Custom-Epoch")) * 1000L;
+
+            // Re-add the d=t to the end to strip out the extra divs
+            String downloadPath = imageOriginal + "?d=t";
+            imageDownloadService.downloadImage(downloadPath, imagePath);
+            imageDownloadService.modifyImageDownloadTimestamp(imagePath, time);
         }
     }
 
 // Reads the content of the email from Daycare, extract child name and pictures. The URLs of the pictures are S3 objects.
 //   The original objects are "medium" quality but by guessing the URLs, you can get the original quality photos. Each
 //   Photo is then downloaded and saved.
-    private void handleDaycareSummaryEmail(MailMessage mailMessage) {
+    private void handleSunshineHouseSummaryEmail(MailMessage mailMessage) {
         String date = mailMessage.getHeaders().get("Date");
         log.info("Parsing email from {}", date);
 

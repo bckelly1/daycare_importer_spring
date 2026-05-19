@@ -15,6 +15,16 @@ public class DaycareApiController {
 
     @GetMapping("/daycare")
     public void triggerDaycareImport() {
-        importService.runDaycareSummaryImport();
+        importService.runSunshineHouseImport();
+    }
+
+    @GetMapping("/sunshine-house")
+    public void triggerSunshineHouseImport() {
+        importService.runSunshineHouseImport();
+    }
+
+    @GetMapping("/bright-horizons")
+    public void triggerBrightHorizonsImport() {
+        importService.runBrightHorizonsImport();
     }
 }
